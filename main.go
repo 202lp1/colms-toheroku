@@ -32,7 +32,7 @@ func main() {
 	//})
 	fmt.Println("main")
 
-	cfig.DB, err = connectDBmysql()
+	cfig.DB, err = connectDB()
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
