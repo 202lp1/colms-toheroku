@@ -9,14 +9,16 @@ import (
 	"github.com/202lp1/colms/models"
 )
 
-type ViewData struct {
+type ViewEmployee struct {
 	Name    string
 	IsEdit  bool
 	Data    models.Empleado
 	Widgets []models.Empleado
 }
 
-var tmple = template.Must(template.New("foo").Funcs(cfig.FuncMap).ParseFiles("web/Header.tmpl", "web/Menu.tmpl", "web/Footer.tmpl", "web/employee/index.html", "web/employee/form.html"))
+var tmple = template.Must(template.New("foo").Funcs(cfig.FuncMap).
+	ParseFiles("web/Header.tmpl", "web/Menu.tmpl", "web/Footer.tmpl",
+		"web/employee/index.html", "web/employee/form.html"))
 
 func EmployeeList(w http.ResponseWriter, req *http.Request) {
 	// Create
@@ -27,7 +29,7 @@ func EmployeeList(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	//log.Printf("lis: %v", lis)
-	data := ViewData{
+	data := ViewEmployee{
 		Name:    "Empleado",
 		Widgets: lis,
 	}
@@ -58,14 +60,21 @@ func EmployeeForm(w http.ResponseWriter, r *http.Request) {
 		d.Name = r.FormValue("name")
 		d.City = r.FormValue("city")
 		if id != "" {
-			cfig.DB.Save(&d)
+			if err := cfig.DB.Save(&d).Error; err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return //err
+			}
+
 		} else {
-			cfig.DB.Create(&d)
+			if err := cfig.DB.Create(&d).Error; err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return //err
+			}
 		}
 		http.Redirect(w, r, "/employee/index", 301)
 	}
 
-	data := ViewData{
+	data := ViewEmployee{
 		Name:   "Empleado",
 		Data:   d,
 		IsEdit: IsEdit,
@@ -85,6 +94,10 @@ func EmployeeDel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	cfig.DB.Unscoped().Delete(&d)
+
+	if err := cfig.DB.Unscoped().Delete(&d).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return //err
+	}
 	http.Redirect(w, r, "/employee/index", 301)
 }
